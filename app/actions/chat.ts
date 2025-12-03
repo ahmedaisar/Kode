@@ -10,11 +10,12 @@ import type { ChatResponse } from '@/types/chat';
  */
 export async function processChatMessage(
   userMessage: string,
-  projectContext: string
+  projectContext: string,
+  hasSupabase: boolean = false
 ): Promise<ChatResponse> {
   try {
-    // Create the system prompt with project context
-    const systemPrompt = createSystemPrompt(projectContext);
+    // Create the system prompt with project context and Supabase status
+    const systemPrompt = createSystemPrompt(projectContext, hasSupabase);
 
     // Mock LLM response for demonstration
     // In production, replace this with actual LLM API call:
@@ -115,6 +116,56 @@ export default function Button({
 </file_change>
 
 I've created a reusable Button component with support for primary and secondary variants. It includes proper TypeScript types and Tailwind CSS styling.`;
+  }
+
+  if (lowerMessage.includes('supabase') || lowerMessage.includes('database')) {
+    return `I'll set up Supabase integration for your project.
+
+<file_change path="/lib/supabase.ts">
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+</file_change>
+
+<file_change path="/package.json">
+{
+  "name": "my-project",
+  "version": "1.0.0",
+  "description": "A project built with AI",
+  "scripts": {
+    "dev": "echo \\"Development server would start here\\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
+</file_change>
+
+I've created the Supabase client configuration in \`lib/supabase.ts\` and added the \`@supabase/supabase-js\` dependency to your package.json.
+
+The client is configured to use the environment variables from your \`.env.local\` file:
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+You can now use the Supabase client in your components:
+
+\`\`\`typescript
+import { supabase } from '@/lib/supabase'
+
+// Example: Fetch data
+const { data, error } = await supabase
+  .from('your_table')
+  .select('*')
+
+// Example: Sign up a user
+const { data, error } = await supabase.auth.signUp({
+  email: 'user@example.com',
+  password: 'securepassword'
+})
+\`\`\``;
   }
 
   return `I understand you want to: "${userMessage}"

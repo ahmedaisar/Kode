@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, FileEdit } from 'lucide-react';
 import { processChatMessage } from '@/app/actions/chat';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import type { Message } from '@/types/chat';
 import type { WebContainer } from '@webcontainer/api';
 import { serializeFileSystem, fileSystemToText, writeFilesToContainer } from '@/lib/filesystem';
@@ -17,6 +18,7 @@ export default function ChatPanel({ webContainer }: ChatPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [filesBeingUpdated, setFilesBeingUpdated] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { isConfigured } = useSupabase();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -47,7 +49,7 @@ export default function ChatPanel({ webContainer }: ChatPanelProps) {
       const projectContext = fileSystemToText(fs);
 
       // Process the message with the server action
-      const response = await processChatMessage(input, projectContext);
+      const response = await processChatMessage(input, projectContext, isConfigured);
 
       // Apply file changes if any
       if (response.fileChanges && response.fileChanges.length > 0) {

@@ -1,16 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Settings } from 'lucide-react';
 import type { WebContainer } from '@webcontainer/api';
 import { getWebContainer } from '@/lib/webcontainer';
 import { createMockWebContainer } from '@/lib/mock-webcontainer';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import ChatPanel from './ChatPanel';
+import SupabaseSettings from './SupabaseSettings';
 
 export default function IDELayout() {
   const [webContainer, setWebContainer] = useState<WebContainer | null>(null);
   const [isBooting, setIsBooting] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMock, setIsMock] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { isConfigured } = useSupabase();
 
   useEffect(() => {
     async function initWebContainer() {
@@ -99,6 +104,18 @@ export default function IDELayout() {
               Mock Mode
             </div>
           )}
+          {isConfigured && (
+            <div className="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+              Supabase Connected
+            </div>
+          )}
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Supabase Settings"
+          >
+            <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
           <div className={`px-3 py-1 rounded-full text-sm ${
             webContainer ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 
             isBooting ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
@@ -133,6 +150,13 @@ export default function IDELayout() {
           <ChatPanel webContainer={webContainer} />
         </div>
       </div>
+
+      {/* Supabase Settings Modal */}
+      <SupabaseSettings 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)}
+        webContainer={webContainer}
+      />
     </div>
   );
 }
