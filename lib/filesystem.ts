@@ -97,6 +97,29 @@ export function fileSystemToText(fs: SerializedFileSystem): string {
 }
 
 /**
+ * Extract all files from a file tree to a flat list
+ */
+export function extractFilesFromTree(node: FileNode): { path: string; content: string }[] {
+  const files: { path: string; content: string }[] = [];
+  
+  function traverse(n: FileNode): void {
+    if (n.type === 'file' && n.content !== undefined) {
+      files.push({
+        path: n.path,
+        content: n.content,
+      });
+    } else if (n.type === 'directory' && n.children) {
+      for (const child of n.children) {
+        traverse(child);
+      }
+    }
+  }
+  
+  traverse(node);
+  return files;
+}
+
+/**
  * Write files to the WebContainer
  */
 export async function writeFilesToContainer(
