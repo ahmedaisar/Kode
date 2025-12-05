@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { SupabaseProvider } from "@/contexts/SupabaseContext";
+import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lovable Clone",
-  description: "A clone of Lovable.dev - An AI-powered development platform",
+  title: "Kode - AI Development Platform",
+  description: "A production-ready AI-powered development platform for building web applications",
 };
 
 export default function RootLayout({
@@ -15,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <SupabaseProvider>
-          {children}
-        </SupabaseProvider>
+        <ToastProvider>
+          <SupabaseProvider>
+            {children}
+          </SupabaseProvider>
+        </ToastProvider>
       </body>
     </html>
   );

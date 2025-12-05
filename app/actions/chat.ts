@@ -1,45 +1,102 @@
 'use server';
 
+import Anthropic from '@anthropic-ai/sdk';
+import { headers } from 'next/headers';
 import { createSystemPrompt, parseLLMResponse } from '@/lib/llm-parser';
+import { rateLimit } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 import type { ChatResponse } from '@/types/chat';
 
 /**
  * Process a chat message and return a response
- * This is a mock implementation that demonstrates the structure
- * In a real implementation, this would call OpenAI, Anthropic, or another LLM API
+ * Uses Claude 3.5 Sonnet for AI-powered code generation
  */
 export async function processChatMessage(
   userMessage: string,
   projectContext: string,
   hasSupabase: boolean = false
 ): Promise<ChatResponse> {
+  const startTime = Date.now();
+  
   try {
+    // Get user identifier for rate limiting (IP address or session ID)
+    const headersList = await headers();
+    const forwardedFor = headersList.get('x-forwarded-for');
+    const ip = forwardedFor ? forwardedFor.split(',')[0] : 'unknown';
+    
+    // Apply rate limiting
+    const rateLimitResult = rateLimit(ip, {
+      maxRequests: 50, // 50 requests
+      windowMs: 60000, // per minute
+    });
+    
+    if (!rateLimitResult.allowed) {
+      logger.warn('Rate limit exceeded', { ip, resetAt: rateLimitResult.resetAt });
+      return {
+        message: `Rate limit exceeded. Please wait ${Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)} seconds before trying again.`,
+        fileChanges: [],
+      };
+    }
+    
+    logger.info('Processing chat message', {
+      messageLength: userMessage.length,
+      hasSupabase,
+      ip,
+      remaining: rateLimitResult.remaining,
+    });
     // Create the system prompt with project context and Supabase status
     const systemPrompt = createSystemPrompt(projectContext, hasSupabase);
 
-    // Mock LLM response for demonstration
-    // In production, replace this with actual LLM API call:
-    // const response = await openai.chat.completions.create({
-    //   model: 'gpt-4',
-    //   messages: [
-    //     { role: 'system', content: systemPrompt },
-    //     { role: 'user', content: userMessage }
-    //   ]
-    // });
+    // Check if API key is configured
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    
+    let llmResponse: string;
+    
+    if (apiKey) {
+      // Use real Claude API
+      const anthropic = new Anthropic({ apiKey });
+      
+      const response = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: userMessage }
+        ],
+      });
 
-    const mockLLMResponse = generateMockResponse(userMessage);
+      llmResponse = response.content
+        .filter((block) => block.type === 'text')
+        .map((block) => (block as any).text)
+        .join('\n');
+    } else {
+      // Fall back to mock responses if no API key
+      console.warn('No ANTHROPIC_API_KEY found, using mock responses');
+      llmResponse = generateMockResponse(userMessage);
+    }
 
     // Parse the response for file changes
-    const { message, fileChanges } = parseLLMResponse(mockLLMResponse);
+    const { message, fileChanges } = parseLLMResponse(llmResponse);
+    
+    const duration = Date.now() - startTime;
+    logger.info('Chat message processed successfully', {
+      duration,
+      fileChangesCount: fileChanges.length,
+    });
 
     return {
       message,
       fileChanges,
     };
   } catch (error) {
-    console.error('Error processing chat message:', error);
+    const duration = Date.now() - startTime;
+    logger.error('Error processing chat message', error as Error, {
+      duration,
+      messageLength: userMessage.length,
+    });
+    
     return {
-      message: 'Sorry, I encountered an error processing your request.',
+      message: 'Sorry, I encountered an error processing your request. Please try again.',
       fileChanges: [],
     };
   }
@@ -100,7 +157,7 @@ export default function Button({
 }: ButtonProps) {
   const baseStyles = 'px-4 py-2 rounded-lg font-medium transition-colors';
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    primary: 'bg-emerald-600 text-white hover:bg-emerald-700',
     secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300'
   };
 

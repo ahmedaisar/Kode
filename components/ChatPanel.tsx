@@ -119,7 +119,7 @@ export default function ChatPanel({ webContainer }: ChatPanelProps) {
             <div
               className={`max-w-[80%] rounded-lg px-4 py-2 ${
                 message.role === 'user'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-emerald-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
               }`}
             >
@@ -166,7 +166,7 @@ export default function ChatPanel({ webContainer }: ChatPanelProps) {
           <button
             type="submit"
             disabled={isLoading || !input.trim() || !webContainer}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />

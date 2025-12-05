@@ -2,15 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+@import '@xterm/xterm/css/xterm.css';
+
 :root {
+  /* Light mode */
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #10b981;
+  --secondary: #f3f4f6;
+  --editor-bg: #ffffff;
+  --terminal-bg: #f9fafb;
+  --highlight: #dbeafe;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Dark mode - matching ui-spec.md */
+    --background: #09090b;
+    --foreground: #fafafa;
+    --primary: #10b981;
+    --secondary: #18181b;
+    --editor-bg: #000000;
+    --terminal-bg: #1e1e1e;
+    --highlight: #1e3a8a;
   }
 }
 
